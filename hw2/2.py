@@ -36,7 +36,7 @@ def take_input(board, player_token):
                 continue
             if 1 <= player_answer <= 100:
                 y, x = divmod(player_answer-1, 10)
-                if str(board[y][x]) not in "XO":
+                if str(board[y][x]) not in "X0":
                     board[y][x] = player_token
                     valid = True
                 else:
