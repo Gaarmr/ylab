@@ -8,13 +8,12 @@ offsets = [
     [(-1,  1), (1, -1)],
 ]
 
+BOARD = [
+    list(range(10*i+1, 10*i+11)) for i in range(10)
+]
 
 print("*" * 10, " Игра Крестики-нолики 10x10 ", "*" * 10)
 
-board = [
-    list(range(10*i+1, 10*i+11)) for i in range(10)
-]
-print(board)
 
 def draw_board(board):
     print("-" * 51)
@@ -25,17 +24,19 @@ def draw_board(board):
 
 def take_input(board, player_token):
     valid = False
+    x = None
+    y = None
     while not valid:
         if player_token == 'X':
             player_answer = input("Куда поставим " + player_token + "? ")
             try:
                 player_answer = int(player_answer)
-            except:
+            except (ValueError, TypeError):
                 print("Некорректный ввод. Вы уверены, что ввели число?")
                 continue
-            if player_answer >= 1 and player_answer <= 100:
+            if 1 <= player_answer <= 100:
                 y, x = divmod(player_answer-1, 10)
-                if (str(board[y][x]) not in "XO"):
+                if str(board[y][x]) not in "XO":
                     board[y][x] = player_token
                     valid = True
                 else:
@@ -73,7 +74,6 @@ def check_win(board, x, y):
     return False
 
 
-
 def main(board):
     counter = 0
     win = False
@@ -97,7 +97,7 @@ def main(board):
     draw_board(board)
 
 
-main(board)
+main(BOARD)
 
 
 input("Нажмите Enter для выхода!")
