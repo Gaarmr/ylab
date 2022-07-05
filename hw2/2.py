@@ -12,14 +12,14 @@ BOARD = [
     list(range(10*i+1, 10*i+11)) for i in range(10)
 ]
 
-print("*" * 10, " Игра Крестики-нолики 10x10 ", "*" * 10)
+print("*** Игра Крестики-нолики 10x10 ***" )
 
 
 def draw_board(board):
-    print("-" * 51)
+    print("-" * 33)
     for y in range(10):
         print('|', '|'.join(f'{board[y][x]:>2}' for x in range(10)), '|')
-    print("-" * 51)
+    print("-" * 33)
 
 
 def take_input(board, player_token):
@@ -48,7 +48,7 @@ def take_input(board, player_token):
                 (x, y) 
                 for y in range(10) 
                 for x in range(10) 
-                if str(board[y][x]) not in 'XO'
+                if str(board[y][x]) not in 'X0'
             ])
             board[y][x] = player_token
             valid = True
