@@ -3,6 +3,7 @@ from functools import wraps
 
 def to_cache(func):
     cache = {}
+
     @wraps(func)
     def wrapper(arg):
         if arg in cache:
