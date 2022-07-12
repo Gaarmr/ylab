@@ -18,15 +18,14 @@ def repeat(
                 sleep(delay)
                 print(f'Ожидание: {delay}')
                 func(*args, **kwargs)
-                if delay < border_sleep_time:
-                    delay *= factor
-                else:
+                delay *= factor
+                if delay > border_sleep_time:
                     delay = border_sleep_time
         return wrapper
     return decorator
 
 
-@repeat(3, 1, 2, 10)
+@repeat(6, 1, 2, 10)
 def rnd_int():
     print(randint(1, 10))
 
