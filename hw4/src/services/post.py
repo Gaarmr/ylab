@@ -9,6 +9,7 @@ from src.api.v1.schemas import PostCreate, PostModel
 from src.db import AbstractCache, get_cache, get_session
 from src.models import Post
 from src.services import ServiceMixin
+from src.models.user import User
 
 __all__ = ("PostService", "get_post_service")
 
@@ -29,9 +30,13 @@ class PostService(ServiceMixin):
             self.cache.set(key=f"{post.id}", value=post.json())
         return post.dict() if post else None
 
-    def create_post(self, post: PostCreate) -> dict:
+    def create_post(self, user: User, post: PostCreate) -> dict:
         """Создать пост."""
-        new_post = Post(title=post.title, description=post.description)
+        new_post = Post(
+            title=post.title,
+            description=post.description,
+            owner_id=user.id
+        )
         self.session.add(new_post)
         self.session.commit()
         self.session.refresh(new_post)

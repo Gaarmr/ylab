@@ -3,7 +3,8 @@ import uuid
 
 from datetime import datetime
 from functools import lru_cache
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from passlib.hash import pbkdf2_sha256
 from redis import Redis
 from sqlmodel import Session
@@ -25,7 +26,10 @@ from src.core.config import (
     )
 
 
-class UserServis(ServiceMixin):
+security = HTTPBearer()
+
+
+class UserService(ServiceMixin):
     def __init__(
         self,
         cache: AbstractCache,
@@ -110,6 +114,69 @@ class UserServis(ServiceMixin):
         else:
             raise ValueError
 
+    def get_user(self, login_data: Login):
+        user = self.session.query(User).filter(
+            User.username == login_data.username
+        ).first()
+        return user
+
+    def update_user(self, user, user_update):
+        if user_update.email is not None:
+            user.email = user_update.email
+        if user_update.username is not None:
+            user.username = user_update.username
+        self.session.add(user)
+        self.session.commit()
+        self.session.refresh(user)
+        print(user)
+        return user
+
+    def logout(self, user, access_token, refresh_token):
+        decode_access_token = jwt.decode(
+            access_token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM]
+        )
+        decode_refresh_token = jwt.decode(
+            refresh_token,
+            JWT_SECRET_KEY,
+            algorithms=[JWT_ALGORITHM]
+        )
+        self.blocked_access_tokens.set(decode_access_token.get('jti'), 1)
+        self.active_refresh_tokens.lrem(
+            str(user.id),
+            0,
+            decode_refresh_token.get('jti')
+        )
+
+    def logout_all(self, user):
+        self.active_refresh_tokens.delete(str(user.id))
+
+
+def get_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    return credentials.credentials
+
+
+def get_current_user(
+    token: str = Depends(get_token),
+    session: Session = Depends(get_session),
+    blocked_access_tokens: Redis = Depends(get_blocked_access_token),
+):
+    decode_token = jwt.decode(
+        token,
+        JWT_SECRET_KEY,
+        algorithms=[JWT_ALGORITHM]
+    )
+    if blocked_access_tokens.exists(decode_token.get('jti')):
+        raise HTTPException(401)
+    user_id = decode_token.get('sub')
+    user = session.query(User).filter(
+        User.id == user_id
+    ).first()
+    if not user:
+        raise HTTPException(401)
+    return user
+
 
 @lru_cache()
 def get_user_service(
@@ -117,8 +184,8 @@ def get_user_service(
     session: Session = Depends(get_session),
     blocked_access_tokens: Redis = Depends(get_blocked_access_token),
     active_refresh_tokens: Redis = Depends(get_active_refresh_token),
-) -> UserServis:
-    return UserServis(
+) -> UserService:
+    return UserService(
         cache=cache,
         session=session,
         blocked_access_tokens=blocked_access_tokens,

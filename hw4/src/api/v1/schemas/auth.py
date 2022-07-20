@@ -22,3 +22,7 @@ class Login(BaseModel):
 class Tokens(BaseModel):
     access_token: str
     refresh_token: str
+
+
+class Logout(BaseModel):
+    refresh_token: str
